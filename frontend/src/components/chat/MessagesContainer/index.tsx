@@ -33,6 +33,7 @@ const MessagesContainer = ({ navigate }: Props) => {
   const { uploadFile: _uploadFile } = useChatInteract();
   const setMessages = useSetRecoilState(messagesState);
   const setSideView = useSetRecoilState(sideViewState);
+  const sideView = useRecoilValue(sideViewState);
   const sessionId = useRecoilValue(sessionIdState);
 
   const { t } = useTranslation();
@@ -93,9 +94,24 @@ const MessagesContainer = ({ navigate }: Props) => {
 
   useEffect(() => {
     if (!elements.some((element) => element.display === 'side')) {
-      setSideView(undefined);
+      if (sideView) setSideView(undefined);
+      return;
     }
-  }, [elements, setSideView]);
+
+    if (!sideView) return;
+
+    const refreshedElements = sideView.elements.map(
+      (openElement) =>
+        elements.find((element) => element.id === openElement.id) ?? openElement
+    );
+    const hasChanged = refreshedElements.some(
+      (element, index) => element !== sideView.elements[index]
+    );
+
+    if (hasChanged) {
+      setSideView({ ...sideView, elements: refreshedElements });
+    }
+  }, [elements, setSideView, sideView]);
 
   const onElementRefClick = useCallback(
     (element: IMessageElement) => {
