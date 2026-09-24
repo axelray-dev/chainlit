@@ -94,7 +94,9 @@ const MessagesContainer = ({ navigate }: Props) => {
 
   useEffect(() => {
     if (!elements.some((element) => element.display === 'side')) {
-      if (sideView) setSideView(undefined);
+      if (sideView?.elements.some((element) => element.display === 'side')) {
+        setSideView(undefined);
+      }
       return;
     }
 
