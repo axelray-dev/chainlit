@@ -57,6 +57,12 @@ const sideElement = (name: string): IMessageElement => ({
   threadId: null
 });
 
+const pageElement = (name: string): IMessageElement => ({
+  ...sideElement(name),
+  id: 'page-element',
+  display: 'page'
+});
+
 const SideViewObserver = () => {
   const sideView = useRecoilValue(sideViewState);
 
@@ -149,7 +155,11 @@ describe('MessagesContainer side view', () => {
 
   it('refreshes the open element when its content changes', () => {
     const initialElement = { ...sideElement('Initial'), content: 'version 1' };
-    const updatedElement = { ...initialElement, name: 'Updated', content: 'version 2' };
+    const updatedElement = {
+      ...initialElement,
+      name: 'Updated',
+      content: 'version 2'
+    };
 
     vi.mocked(useChatData).mockReturnValue({
       elements: [initialElement],
@@ -191,5 +201,70 @@ describe('MessagesContainer side view', () => {
     expect(screen.getByText('Custom title')).toBeInTheDocument();
     expect(screen.getByText('version 2')).toBeInTheDocument();
     expect(screen.queryByText('version 1')).not.toBeInTheDocument();
+  });
+
+  it('refreshes and closes a fallback page panel as its element changes', () => {
+    const initialElement = { ...pageElement('Initial'), content: 'version 1' };
+
+    vi.mocked(useChatData).mockReturnValue({
+      elements: [initialElement],
+      actions: [],
+      askUser: undefined,
+      loading: false
+    } as ReturnType<typeof useChatData>);
+
+    const { rerender } = render(
+      <RecoilRoot
+        initializeState={({ set }) =>
+          set(sideViewState, { title: 'Custom title', elements: [initialElement] })
+        }
+      >
+        <MessagesContainer />
+        <SideViewObserver />
+        <SideViewContentObserver />
+      </RecoilRoot>
+    );
+
+    expect(screen.getByText('version 1')).toBeInTheDocument();
+
+    const updatedElement = {
+      ...initialElement,
+      name: 'Updated',
+      content: 'version 2'
+    };
+    vi.mocked(useChatData).mockReturnValue({
+      elements: [updatedElement],
+      actions: [],
+      askUser: undefined,
+      loading: false
+    } as ReturnType<typeof useChatData>);
+
+    rerender(
+      <RecoilRoot>
+        <MessagesContainer />
+        <SideViewObserver />
+        <SideViewContentObserver />
+      </RecoilRoot>
+    );
+
+    expect(screen.getByText('Updated')).toBeInTheDocument();
+    expect(screen.getByText('version 2')).toBeInTheDocument();
+
+    vi.mocked(useChatData).mockReturnValue({
+      elements: [],
+      actions: [],
+      askUser: undefined,
+      loading: false
+    } as ReturnType<typeof useChatData>);
+
+    rerender(
+      <RecoilRoot>
+        <MessagesContainer />
+        <SideViewObserver />
+        <SideViewContentObserver />
+      </RecoilRoot>
+    );
+
+    expect(screen.getByText('closed')).toBeInTheDocument();
   });
 });

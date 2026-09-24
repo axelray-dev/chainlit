@@ -93,25 +93,31 @@ const MessagesContainer = ({ navigate }: Props) => {
   );
 
   useEffect(() => {
-    if (!elements.some((element) => element.display === 'side')) {
-      if (sideView?.elements.some((element) => element.display === 'side')) {
-        setSideView(undefined);
-      }
-      return;
-    }
-
     if (!sideView) return;
 
     const refreshedElements = sideView.elements.map(
-      (openElement) =>
-        elements.find((element) => element.id === openElement.id) ?? openElement
-    );
-    const hasChanged = refreshedElements.some(
-      (element, index) => element !== sideView.elements[index]
-    );
+      (openElement) => elements.find((element) => element.id === openElement.id)
+    ).filter((element): element is IMessageElement => element !== undefined);
+
+    if (refreshedElements.length === 0) {
+      setSideView(undefined);
+      return;
+    }
+
+    const hasChanged =
+      refreshedElements.length !== sideView.elements.length ||
+      refreshedElements.some(
+        (element, index) => element !== sideView.elements[index]
+      );
 
     if (hasChanged) {
       setSideView({ ...sideView, elements: refreshedElements });
+    }
+
+    if (!elements.some((element) => element.display === 'side')) {
+      if (sideView.elements.some((element) => element.display === 'side')) {
+        setSideView(undefined);
+      }
     }
   }, [elements, setSideView, sideView]);
 
