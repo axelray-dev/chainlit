@@ -247,7 +247,7 @@ describe('MessagesContainer side view', () => {
       </RecoilRoot>
     );
 
-    expect(screen.getByText('Updated')).toBeInTheDocument();
+    expect(screen.getByText('Custom title')).toBeInTheDocument();
     expect(screen.getByText('version 2')).toBeInTheDocument();
 
     vi.mocked(useChatData).mockReturnValue({
