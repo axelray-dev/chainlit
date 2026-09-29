@@ -33,7 +33,6 @@ const MessagesContainer = ({ navigate }: Props) => {
   const { uploadFile: _uploadFile } = useChatInteract();
   const setMessages = useSetRecoilState(messagesState);
   const setSideView = useSetRecoilState(sideViewState);
-  const sideView = useRecoilValue(sideViewState);
   const sessionId = useRecoilValue(sessionIdState);
 
   const { t } = useTranslation();
@@ -93,33 +92,37 @@ const MessagesContainer = ({ navigate }: Props) => {
   );
 
   useEffect(() => {
-    if (!sideView) return;
-
-    const refreshedElements = sideView.elements.map(
-      (openElement) => elements.find((element) => element.id === openElement.id)
-    ).filter((element): element is IMessageElement => element !== undefined);
-
-    if (refreshedElements.length === 0) {
+    const sideElements = elements.filter(
+      (element) => element.display === 'side'
+    );
+    if (sideElements.length === 0) {
       setSideView(undefined);
       return;
     }
 
-    const hasChanged =
-      refreshedElements.length !== sideView.elements.length ||
-      refreshedElements.some(
-        (element, index) => element !== sideView.elements[index]
+    // Refresh the current selection without reopening a closed preview or
+    // selecting unrelated elements that arrive later.
+    setSideView((current) => {
+      if (!current) return current;
+      const updatedElements = current.elements.map(
+        (selected) =>
+          sideElements.find((element) => element.id === selected.id) ?? selected
       );
-
-    if (hasChanged) {
-      setSideView({ ...sideView, elements: refreshedElements });
-    }
-
-    if (!elements.some((element) => element.display === 'side')) {
-      if (sideView.elements.some((element) => element.display === 'side')) {
-        setSideView(undefined);
+      if (
+        updatedElements.every(
+          (element, index) => element === current.elements[index]
+        )
+      ) {
+        return current;
       }
-    }
-  }, [elements, setSideView, sideView]);
+      const title =
+        current.elements.length === 1 &&
+        current.title === current.elements[0].name
+          ? updatedElements[0].name
+          : current.title;
+      return { ...current, title, elements: updatedElements };
+    });
+  }, [elements, setSideView]);
 
   const onElementRefClick = useCallback(
     (element: IMessageElement) => {

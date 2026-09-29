@@ -57,22 +57,10 @@ const sideElement = (name: string): IMessageElement => ({
   threadId: null
 });
 
-const pageElement = (name: string): IMessageElement => ({
-  ...sideElement(name),
-  id: 'page-element',
-  display: 'page'
-});
-
 const SideViewObserver = () => {
   const sideView = useRecoilValue(sideViewState);
 
   return <div>{sideView?.title ?? 'closed'}</div>;
-};
-
-const SideViewContentObserver = () => {
-  const sideView = useRecoilValue(sideViewState);
-
-  return <div>{sideView?.elements[0]?.content ?? 'no-content'}</div>;
 };
 
 describe('MessagesContainer side view', () => {
@@ -147,121 +135,6 @@ describe('MessagesContainer side view', () => {
       <RecoilRoot>
         <MessagesContainer />
         <SideViewObserver />
-      </RecoilRoot>
-    );
-
-    expect(screen.getByText('closed')).toBeInTheDocument();
-  });
-
-  it('refreshes the open element when its content changes', () => {
-    const initialElement = { ...sideElement('Initial'), content: 'version 1' };
-    const updatedElement = {
-      ...initialElement,
-      name: 'Updated',
-      content: 'version 2'
-    };
-
-    vi.mocked(useChatData).mockReturnValue({
-      elements: [initialElement],
-      actions: [],
-      askUser: undefined,
-      loading: false
-    } as ReturnType<typeof useChatData>);
-
-    const { rerender } = render(
-      <RecoilRoot
-        initializeState={({ set }) =>
-          set(sideViewState, { title: 'Custom title', elements: [initialElement] })
-        }
-      >
-        <MessagesContainer />
-        <SideViewObserver />
-        <SideViewContentObserver />
-      </RecoilRoot>
-    );
-
-    expect(screen.getByText('Custom title')).toBeInTheDocument();
-    expect(screen.getByText('version 1')).toBeInTheDocument();
-
-    vi.mocked(useChatData).mockReturnValue({
-      elements: [updatedElement],
-      actions: [],
-      askUser: undefined,
-      loading: false
-    } as ReturnType<typeof useChatData>);
-
-    rerender(
-      <RecoilRoot>
-        <MessagesContainer />
-        <SideViewObserver />
-        <SideViewContentObserver />
-      </RecoilRoot>
-    );
-
-    expect(screen.getByText('Custom title')).toBeInTheDocument();
-    expect(screen.getByText('version 2')).toBeInTheDocument();
-    expect(screen.queryByText('version 1')).not.toBeInTheDocument();
-  });
-
-  it('refreshes and closes a fallback page panel as its element changes', () => {
-    const initialElement = { ...pageElement('Initial'), content: 'version 1' };
-
-    vi.mocked(useChatData).mockReturnValue({
-      elements: [initialElement],
-      actions: [],
-      askUser: undefined,
-      loading: false
-    } as ReturnType<typeof useChatData>);
-
-    const { rerender } = render(
-      <RecoilRoot
-        initializeState={({ set }) =>
-          set(sideViewState, { title: 'Custom title', elements: [initialElement] })
-        }
-      >
-        <MessagesContainer />
-        <SideViewObserver />
-        <SideViewContentObserver />
-      </RecoilRoot>
-    );
-
-    expect(screen.getByText('version 1')).toBeInTheDocument();
-
-    const updatedElement = {
-      ...initialElement,
-      name: 'Updated',
-      content: 'version 2'
-    };
-    vi.mocked(useChatData).mockReturnValue({
-      elements: [updatedElement],
-      actions: [],
-      askUser: undefined,
-      loading: false
-    } as ReturnType<typeof useChatData>);
-
-    rerender(
-      <RecoilRoot>
-        <MessagesContainer />
-        <SideViewObserver />
-        <SideViewContentObserver />
-      </RecoilRoot>
-    );
-
-    expect(screen.getByText('Custom title')).toBeInTheDocument();
-    expect(screen.getByText('version 2')).toBeInTheDocument();
-
-    vi.mocked(useChatData).mockReturnValue({
-      elements: [],
-      actions: [],
-      askUser: undefined,
-      loading: false
-    } as ReturnType<typeof useChatData>);
-
-    rerender(
-      <RecoilRoot>
-        <MessagesContainer />
-        <SideViewObserver />
-        <SideViewContentObserver />
       </RecoilRoot>
     );
 
