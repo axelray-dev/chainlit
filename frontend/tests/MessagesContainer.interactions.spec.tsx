@@ -126,6 +126,18 @@ describe('MessagesContainer explicit preview intent', () => {
     expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
   });
 
+  it('clears a preview when its selected element is removed', () => {
+    setElements([element('First'), element('Second')]);
+    const { rerender } = render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'First' }));
+
+    setElements([element('Second')]);
+    rerender(<App />);
+
+    expect(screen.queryByRole('complementary')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Second' })).toBeInTheDocument();
+  });
+
   it('refreshes an open preview when the selected element is updated', () => {
     setElements([{ ...element('First'), url: '/version-1.txt' }]);
     const { rerender } = render(<App />);
