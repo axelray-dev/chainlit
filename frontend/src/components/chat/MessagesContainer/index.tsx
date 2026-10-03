@@ -104,16 +104,10 @@ const MessagesContainer = ({ navigate }: Props) => {
     // selecting unrelated elements that arrive later.
     setSideView((current) => {
       if (!current) return current;
-      const updatedElements = current.elements
-        .map((selected) =>
-          sideElements.find((element) => element.id === selected.id)
-        )
-        .filter(
-          (element): element is IMessageElement => element !== undefined
-        );
-      if (updatedElements.length === 0) {
-        return undefined;
-      }
+      const updatedElements = current.elements.map(
+        (selected) =>
+          sideElements.find((element) => element.id === selected.id) ?? selected
+      );
       if (
         updatedElements.every(
           (element, index) => element === current.elements[index]
