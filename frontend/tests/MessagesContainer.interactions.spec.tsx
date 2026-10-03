@@ -45,11 +45,15 @@ vi.mock('@/components/i18n/Translator', () => ({
   useTranslation: () => ({ t: (key: string) => key })
 }));
 
-function element(id: string, name = id): IMessageElement {
+function element(
+  id: string,
+  name = id,
+  display: IMessageElement['display'] = 'side'
+): IMessageElement {
   return {
     id,
     name,
-    display: 'side',
+    display,
     type: 'text',
     forId: 'review-message'
   };
@@ -68,6 +72,9 @@ function SideView() {
   return view ? (
     <aside aria-label="Element preview" data-sidebar-key={view.key}>
       <p>{view.title}</p>
+      <output aria-label="Preview IDs">
+        {view.elements.map((element) => element.id).join(',')}
+      </output>
       <output aria-label="Preview URL">{view.elements[0]?.url}</output>
       <button onClick={() => setView(undefined)}>Close preview</button>
     </aside>
@@ -139,6 +146,51 @@ describe('MessagesContainer explicit preview intent', () => {
       '/version-2.txt'
     );
   });
+  it('removes selected elements that are no longer available', () => {
+    const first = element('First');
+    const second = element('Second');
+    setElements([first, second]);
+    const { rerender } = render(
+      <RecoilRoot
+        initializeState={({ set }) =>
+          set(sideViewState, {
+            title: 'Selected elements',
+            elements: [first, second]
+          })
+        }
+      >
+        <MessagesContainer />
+        <SideView />
+      </RecoilRoot>
+    );
+
+    setElements([second]);
+    rerender(
+      <RecoilRoot>
+        <MessagesContainer />
+        <SideView />
+      </RecoilRoot>
+    );
+
+    expect(screen.getByLabelText('Preview IDs')).toHaveTextContent('Second');
+    expect(screen.getByLabelText('Preview IDs')).not.toHaveTextContent('First');
+  });
+
+  it('keeps a page preview open while refreshing its element', () => {
+    const page = element('Page', 'Page', 'page');
+    setElements([page]);
+    const { rerender } = render(<App />);
+    fireEvent.click(screen.getByRole('link', { name: 'Page' }));
+
+    setElements([{ ...page, url: '/updated-page.txt' }]);
+    rerender(<App />);
+
+    expect(screen.getByRole('complementary')).toBeInTheDocument();
+    expect(screen.getByLabelText('Preview URL')).toHaveTextContent(
+      '/updated-page.txt'
+    );
+  });
+
   it('preserves a custom title and sidebar key when content changes', () => {
     const selected = element('First');
     setElements([selected]);

@@ -92,22 +92,22 @@ const MessagesContainer = ({ navigate }: Props) => {
   );
 
   useEffect(() => {
-    const sideElements = elements.filter(
-      (element) => element.display === 'side'
-    );
-    if (sideElements.length === 0) {
-      setSideView(undefined);
-      return;
-    }
-
-    // Refresh the current selection without reopening a closed preview or
-    // selecting unrelated elements that arrive later.
+    // Refresh only the current selection. Do not open previews for unrelated
+    // elements, and remove side/page selections that no longer exist.
     setSideView((current) => {
       if (!current) return current;
-      const updatedElements = current.elements.map(
-        (selected) =>
-          sideElements.find((element) => element.id === selected.id) ?? selected
-      );
+      const updatedElements = current.elements
+        .map((selected) => {
+          const updated = elements.find(
+            (element) => element.id === selected.id
+          );
+          if (updated) return updated;
+          return selected.display === 'side' || selected.display === 'page'
+            ? undefined
+            : selected;
+        })
+        .filter((element): element is IMessageElement => element !== undefined);
+      if (updatedElements.length === 0) return undefined;
       if (
         updatedElements.every(
           (element, index) => element === current.elements[index]
